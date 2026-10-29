@@ -1,7 +1,8 @@
 export const SITE_NAME = "فَهْم | Fahm";
 // Purchase requests go to this WhatsApp number (Saudi 0561190934 in international format).
 export const WHATSAPP_NUMBER = "966561190934";
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
+// Trailing slash stripped so `${SITE_URL}/ar` never becomes `//ar`.
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000").replace(/\/+$/, "");
 
 export const LEVELS = { PRIMARY: "المرحلة الابتدائية", MIDDLE: "المرحلة المتوسطة", SECONDARY: "المرحلة الثانوية", ALL: "لجميع المستويات" } as const;
 export const DIFFICULTIES = { BEGINNER: "مبتدئ", INTERMEDIATE: "متوسط", ADVANCED: "متقدم" } as const;
