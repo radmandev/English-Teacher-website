@@ -4,16 +4,20 @@ Arabic-first (RTL) learning platform for Mathematics and English. Next.js 16 (Ap
 
 ## Run locally
 
-Requires Node 22.6+.
+Requires Node 22.9+ and a MySQL (or MariaDB) database.
 
 ```bash
 npm install
-cp .env.example .env        # optionally set ADMIN_EMAIL / ADMIN_PASSWORD
-npm run setup               # creates the SQLite DB and seeds subjects + 12 demo courses (+ admin if set)
+cp .env.example .env        # set DATABASE_URL; optionally ADMIN_EMAIL / ADMIN_PASSWORD
+npm run setup               # creates the tables and seeds subjects + 8 courses (+ admin if set)
 npm run dev                 # http://localhost:3000 → redirects to /ar
 ```
 
-Production: `npm run build && npm start`.
+Production: `npm run build && npm start`. The build also runs `prisma db push` and the seed, so a fresh database gets its tables and courses on the first deploy. `db push` refuses changes that would drop data.
+
+### Hostinger (Node.js Web App)
+
+Import the repo from GitHub (branch `main`, Node 22+, build `npm run build`, start `npm start`, output `.next`). Create a MySQL database in hPanel and set the environment variables below in the app's settings. Use `127.0.0.1` as the host, not `localhost` (Node resolves `localhost` to IPv6, which Hostinger MySQL rejects), and the full prefixed names, e.g. `mysql://u123456789_fahm:PASSWORD@127.0.0.1:3306/u123456789_fahm`. URL-encode special characters in the password.
 
 | Script | What it does |
 | --- | --- |
@@ -26,7 +30,7 @@ Production: `npm run build && npm start`.
 
 | Name | Required | Notes |
 | --- | --- | --- |
-| `DATABASE_URL` | yes | `file:./dev.db` for SQLite. For Postgres set `provider = "postgresql"` in `prisma/schema.prisma` and use a Postgres URL. |
+| `DATABASE_URL` | yes | `mysql://USER:PASSWORD@HOST:3306/DATABASE`. |
 | `NEXT_PUBLIC_SITE_URL` | yes in prod | Canonical URLs, sitemap, Open Graph. |
 | `ADMIN_EMAIL`, `ADMIN_PASSWORD` | no | `db:seed` creates or promotes this account to ADMIN. |
 

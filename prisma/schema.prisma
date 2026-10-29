@@ -1,11 +1,11 @@
-// ponytail: SQLite for zero-config local dev. Production: set provider = "postgresql".
-// String fields stand in for enums (SQLite has none); allowed values live in src/lib/constants.ts.
+// MySQL (Hostinger only offers MySQL/MariaDB). Plain String is VARCHAR(191); anything that can grow past that is @db.Text.
+// String fields stand in for enums; allowed values live in src/lib/constants.ts.
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -15,18 +15,18 @@ model User {
   email        String   @unique
   passwordHash String
   role         String   @default("STUDENT") // STUDENT | INSTRUCTOR | ADMIN
-  avatarUrl    String?  // public photo, shown when the user teaches a course
-  headline     String?  // e.g. qualification, shown under an instructor's name
+  avatarUrl    String?  @db.Text // public photo, shown when the user teaches a course
+  headline     String?  @db.Text // e.g. qualification, shown under an instructor's name
   createdAt    DateTime @default(now())
 
-  sessions       Session[]
-  resetTokens    PasswordResetToken[]
-  enrollments    Enrollment[]
-  progress       LessonProgress[]
-  quizAttempts   QuizAttempt[]
-  favorites      Favorite[]
-  reviews        Review[]
-  taughtCourses  Course[]
+  sessions      Session[]
+  resetTokens   PasswordResetToken[]
+  enrollments   Enrollment[]
+  progress      LessonProgress[]
+  quizAttempts  QuizAttempt[]
+  favorites     Favorite[]
+  reviews       Review[]
+  taughtCourses Course[]
 }
 
 model Session {
@@ -48,39 +48,39 @@ model Subject {
   slug    String   @unique
   nameAr  String
   nameEn  String
-  blurbAr String
+  blurbAr String   @db.Text
   order   Int      @default(0)
   courses Course[]
 }
 
 model Course {
-  id            String    @id @default(cuid())
-  slug          String    @unique
-  title         String
-  subtitle      String
-  description   String
-  keywords      String    @default("") // space-separated, used by search
-  subjectId     String
-  level         String // PRIMARY | MIDDLE | SECONDARY | ALL
-  difficulty    String // BEGINNER | INTERMEDIATE | ADVANCED
-  type          String // COURSE | REVIEW | EXAM_PREP
-  status        String    @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
-  price         Int       @default(0) // in halalas (SAR/100); 0 = free
-  salePrice     Int?
-  billing       String    @default("ONCE") // ONCE (whole package) | MONTHLY | HOURLY — what `price` is charged per
-  durationMonths Int?     // package length, shown next to ONCE prices
-  daysPerWeek    Int?     // class days per week
-  hoursPerDay    Float?   // length of each day's class in hours
-  coverGlyph    String    @default("") // drawn on the generated cover
-  thumbnailUrl  String?
-  objectives    String    @default("[]") // JSON string[]
-  prerequisites String    @default("[]") // JSON string[]
-  faqs          String    @default("[]") // JSON {q,a}[]
-  isDemo        Boolean   @default(false)
-  instructorId  String?
-  publishedAt   DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  id             String    @id @default(cuid())
+  slug           String    @unique
+  title          String
+  subtitle       String
+  description    String    @db.Text
+  keywords       String    @db.Text // space-separated, used by search
+  subjectId      String
+  level          String // PRIMARY | MIDDLE | SECONDARY | ALL
+  difficulty     String // BEGINNER | INTERMEDIATE | ADVANCED
+  type           String // COURSE | REVIEW | EXAM_PREP
+  status         String    @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  price          Int       @default(0) // in halalas (SAR/100); 0 = free
+  salePrice      Int?
+  billing        String    @default("ONCE") // ONCE (whole package) | MONTHLY | HOURLY — what `price` is charged per
+  durationMonths Int? // package length, shown next to ONCE prices
+  daysPerWeek    Int? // class days per week
+  hoursPerDay    Float? // length of each day's class in hours
+  coverGlyph     String    @default("") // drawn on the generated cover
+  thumbnailUrl   String?   @db.Text
+  objectives     String    @db.Text // JSON string[]
+  prerequisites  String    @db.Text // JSON string[]
+  faqs           String    @db.Text // JSON {q,a}[]
+  isDemo         Boolean   @default(false)
+  instructorId   String?
+  publishedAt    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
 
   subject     Subject      @relation(fields: [subjectId], references: [id])
   instructor  User?        @relation(fields: [instructorId], references: [id], onDelete: SetNull)
@@ -103,12 +103,12 @@ model Lesson {
   id        String  @id @default(cuid())
   sectionId String
   title     String
-  summary   String  @default("")
-  body      String  @default("") // paragraphs split by blank lines; $...$ is rendered with KaTeX
-  videoUrl  String?
+  summary   String  @db.Text
+  body      String  @db.Text // paragraphs split by blank lines; $...$ is rendered with KaTeX
+  videoUrl  String? @db.Text
   minutes   Int     @default(10)
   isPreview Boolean @default(false)
-  exercise  String? // JSON Question[] (see src/lib/grading.ts)
+  exercise  String? @db.Text // JSON Question[] (see src/lib/grading.ts)
   order     Int
 
   section      Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
@@ -175,6 +175,6 @@ model ContactMessage {
   id        String   @id @default(cuid())
   name      String
   email     String
-  message   String
+  message   String   @db.Text
   createdAt DateTime @default(now())
 }
