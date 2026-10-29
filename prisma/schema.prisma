@@ -1,0 +1,180 @@
+// ponytail: SQLite for zero-config local dev. Production: set provider = "postgresql".
+// String fields stand in for enums (SQLite has none); allowed values live in src/lib/constants.ts.
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         String   @default("STUDENT") // STUDENT | INSTRUCTOR | ADMIN
+  avatarUrl    String?  // public photo, shown when the user teaches a course
+  headline     String?  // e.g. qualification, shown under an instructor's name
+  createdAt    DateTime @default(now())
+
+  sessions       Session[]
+  resetTokens    PasswordResetToken[]
+  enrollments    Enrollment[]
+  progress       LessonProgress[]
+  quizAttempts   QuizAttempt[]
+  favorites      Favorite[]
+  reviews        Review[]
+  taughtCourses  Course[]
+}
+
+model Session {
+  id        String   @id // sha256 of the cookie token
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model PasswordResetToken {
+  id        String   @id // sha256 of the emailed token
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model Subject {
+  id      String   @id @default(cuid())
+  slug    String   @unique
+  nameAr  String
+  nameEn  String
+  blurbAr String
+  order   Int      @default(0)
+  courses Course[]
+}
+
+model Course {
+  id            String    @id @default(cuid())
+  slug          String    @unique
+  title         String
+  subtitle      String
+  description   String
+  keywords      String    @default("") // space-separated, used by search
+  subjectId     String
+  level         String // PRIMARY | MIDDLE | SECONDARY | ALL
+  difficulty    String // BEGINNER | INTERMEDIATE | ADVANCED
+  type          String // COURSE | REVIEW | EXAM_PREP
+  status        String    @default("DRAFT") // DRAFT | PUBLISHED | ARCHIVED
+  price         Int       @default(0) // in halalas (SAR/100); 0 = free
+  salePrice     Int?
+  billing       String    @default("ONCE") // ONCE (whole package) | MONTHLY | HOURLY — what `price` is charged per
+  durationMonths Int?     // package length, shown next to ONCE prices
+  daysPerWeek    Int?     // class days per week
+  hoursPerDay    Float?   // length of each day's class in hours
+  coverGlyph    String    @default("") // drawn on the generated cover
+  thumbnailUrl  String?
+  objectives    String    @default("[]") // JSON string[]
+  prerequisites String    @default("[]") // JSON string[]
+  faqs          String    @default("[]") // JSON {q,a}[]
+  isDemo        Boolean   @default(false)
+  instructorId  String?
+  publishedAt   DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  subject     Subject      @relation(fields: [subjectId], references: [id])
+  instructor  User?        @relation(fields: [instructorId], references: [id], onDelete: SetNull)
+  sections    Section[]
+  enrollments Enrollment[]
+  favorites   Favorite[]
+  reviews     Review[]
+}
+
+model Section {
+  id       String   @id @default(cuid())
+  courseId String
+  title    String
+  order    Int
+  course   Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons  Lesson[]
+}
+
+model Lesson {
+  id        String  @id @default(cuid())
+  sectionId String
+  title     String
+  summary   String  @default("")
+  body      String  @default("") // paragraphs split by blank lines; $...$ is rendered with KaTeX
+  videoUrl  String?
+  minutes   Int     @default(10)
+  isPreview Boolean @default(false)
+  exercise  String? // JSON Question[] (see src/lib/grading.ts)
+  order     Int
+
+  section      Section          @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+  progress     LessonProgress[]
+  quizAttempts QuizAttempt[]
+}
+
+model Enrollment {
+  id           String   @id @default(cuid())
+  userId       String
+  courseId     String
+  lastLessonId String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course       Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+}
+
+model LessonProgress {
+  userId      String
+  lessonId    String
+  completedAt DateTime @default(now())
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@id([userId, lessonId])
+}
+
+model QuizAttempt {
+  id        String   @id @default(cuid())
+  userId    String
+  lessonId  String
+  score     Int
+  total     Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson    Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+}
+
+model Favorite {
+  userId    String
+  courseId  String
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, courseId])
+}
+
+model Review {
+  userId    String
+  courseId  String
+  rating    Int // 1..5
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  course    Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@id([userId, courseId])
+}
+
+model ContactMessage {
+  id        String   @id @default(cuid())
+  name      String
+  email     String
+  message   String
+  createdAt DateTime @default(now())
+}
