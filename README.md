@@ -19,6 +19,8 @@ Production: `npm run build && npm start`. The build also runs `prisma db push` a
 
 Import the repo from GitHub (branch `main`, Node 22+, build `npm run build`, start `npm start`, output `.next`). Create a MySQL database in hPanel and set the environment variables below in the app's settings. Use `127.0.0.1` as the host, not `localhost` (Node resolves `localhost` to IPv6, which Hostinger MySQL rejects), and the full prefixed names, e.g. `mysql://u123456789_fahm:PASSWORD@127.0.0.1:3306/u123456789_fahm`. URL-encode special characters in the password.
 
+Hostinger shared hosting caps the account at ~120 threads while reporting 48 cores, and most tools size their thread pools to the core count. So `build` and `start` export small `RAYON_NUM_THREADS`/`TOKIO_WORKER_THREADS`/`TURBO_TASKS_AVAILABLE_PARALLELISM`/`UV_THREADPOOL_SIZE` values, `next.config.ts` sets `experimental.cpus: 1`, `src/lib/db.ts` caps Prisma's pool, and the production build uses webpack (`next build --webpack`) because Turbopack's PostCSS worker processes can't start under that cap. `next dev` still uses Turbopack.
+
 | Script | What it does |
 | --- | --- |
 | `npm run lint` | ESLint (next core-web-vitals + typescript) |

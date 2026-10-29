@@ -4,8 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "prisma generate && prisma db push --skip-generate && npm run db:seed && next build",
-    "start": "next start",
+    "build": "export RAYON_NUM_THREADS=2 TOKIO_WORKER_THREADS=2 TURBO_TASKS_AVAILABLE_PARALLELISM=2 UV_THREADPOOL_SIZE=2 && prisma generate && prisma db push --skip-generate && npm run db:seed && next build --webpack",
+    "start": "export RAYON_NUM_THREADS=2 TOKIO_WORKER_THREADS=2 TURBO_TASKS_AVAILABLE_PARALLELISM=2 UV_THREADPOOL_SIZE=2 && next start",
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "node --experimental-strip-types --no-warnings src/lib/grading.check.ts",
